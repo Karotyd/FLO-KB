@@ -36,9 +36,9 @@ Il est composé de deux couches :
 - [x] `requirements.txt` allégé (sans torch/transformers/accelerate)
 - [x] Venv Python 3.11 + llama-cpp-python 0.3.16 CUDA
 - [x] Git initialisé (commit initial)
-- [ ] **Symlinks modèles GGUF à créer** (voir section Modèles)
+- [x] Symlinks modèles GGUF créés (hard links via os.link)
 - [x] Spec KB dans `docs/spec_knowledgebase.md`
-- [ ] Module KnowledgeBase — non commencé (Phase 0 à démarrer)
+- [x] Module KnowledgeBase — Phase 0 complétée
 
 ---
 
@@ -207,7 +207,7 @@ Spec complète : `docs/spec_knowledgebase.md` (à copier depuis la conversation 
 
 | Phase | Description | Statut |
 |-------|-------------|--------|
-| **Phase 0** | Préparation : symlinks GGUF, dossiers KB, models.json KB, test démarrage | Non commencé |
+| **Phase 0** | Préparation : symlinks GGUF, dossiers KB, models.json KB, test démarrage | **Complété** |
 | **Phase 1** | Parseurs : base_parser, chatgpt_parser, markdown_parser | Non commencé |
 | **Phase 2** | Base de données SQLite + déduplication par hash SHA-256 | Non commencé |
 | **Phase 3** | Traitement IA : filtrage, extraction, résumé, classification | Non commencé |
@@ -266,4 +266,4 @@ venv/Scripts/pip.exe install -r requirements.txt
 ## Dernière mise à jour
 
 **Date** : 2026-03-08
-**Description** : Isolation initiale du backend FLO depuis FLO_v0.5_STABLE. Création de CLAUDE.md et CHANGELOG.md. Venv Python 3.11 + llama-cpp-python 0.3.16 CUDA opérationnel. Spec KB ajoutée dans docs/. Module KB non commencé.
+**Description** : Phase 0 complétée. Hard links GGUF créés (Mistral 4.1 Go, Guanaco 3.9 Go). Dossiers KB créés (data/knowledge/, data/obsidian_vault/). models.json mis à jour avec kb-extractor et kb-light. Squelette module server/knowledge/ créé (5 __init__.py). FLO validé : {"status":"ok"}. Dossier Qwen2.5-14B/ créé, en attente du modèle.

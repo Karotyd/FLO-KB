@@ -6,7 +6,10 @@ __pycache__/
 .env
 logs/
 data/sessions/
-data/knowledge/
-data/obsidian_vault/
+data/knowledge/kb.sqlite
+data/knowledge/imports/*
+!data/knowledge/imports/.gitkeep
+data/obsidian_vault/*
+!data/obsidian_vault/.gitkeep
 models/*.gguf
 models/**/*.gguf
