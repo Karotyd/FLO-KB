@@ -37,7 +37,7 @@ Il est composé de deux couches :
 - [x] Venv Python 3.11 + llama-cpp-python 0.3.16 CUDA
 - [x] Git initialisé (commit initial)
 - [ ] **Symlinks modèles GGUF à créer** (voir section Modèles)
-- [ ] **Spec KB à copier dans `docs/spec_knowledgebase.md`**
+- [x] Spec KB dans `docs/spec_knowledgebase.md`
 - [ ] Module KnowledgeBase — non commencé (Phase 0 à démarrer)
 
 ---
@@ -55,7 +55,7 @@ FLO-KB/
 ├── CHANGELOG.md                     <- Historique des versions
 │
 ├── docs/                            <- Documentation
-│   └── spec_knowledgebase.md        <- A CRÉER : spec complète du module KB
+│   └── spec_knowledgebase.md        <- Spec complète du module KB
 │
 ├── data/
 │   ├── sessions/                    <- Sessions de chat (gitignored)
@@ -266,4 +266,4 @@ venv/Scripts/pip.exe install -r requirements.txt
 ## Dernière mise à jour
 
 **Date** : 2026-03-08
-**Description** : Isolation initiale du backend FLO depuis FLO_v0.5_STABLE. Création de CLAUDE.md et CHANGELOG.md. Venv Python 3.11 + llama-cpp-python 0.3.16 CUDA opérationnel. Module KB non commencé.
+**Description** : Isolation initiale du backend FLO depuis FLO_v0.5_STABLE. Création de CLAUDE.md et CHANGELOG.md. Venv Python 3.11 + llama-cpp-python 0.3.16 CUDA opérationnel. Spec KB ajoutée dans docs/. Module KB non commencé.
