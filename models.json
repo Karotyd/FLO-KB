@@ -36,24 +36,6 @@
     }
   ,
     {
-      "id": "kb-extractor",
-      "name": "Qwen2.5-Coder-32B Instruct (Q4_K_M)",
-      "path": "models/qwen2.5-coder-32b-instruct-q4_k_m/qwen2.5-coder-32b-instruct-q4_k_m.gguf",
-      "specialties": ["extraction", "summarization", "classification"],
-      "context_length": 8192,
-      "params": {
-        "n_ctx": 8192,
-        "n_gpu_layers": 65,
-        "n_threads": 8,
-        "temperature": 0.1,
-        "top_p": 0.3,
-        "repeat_penalty": 1.1,
-        "max_tokens": 2000
-      },
-      "keywords": [],
-      "vram_estimate_gb": 19
-    },
-    {
       "id": "kb-light",
       "name": "Mistral 7B Instruct (Q4_K_M)",
       "path": "models/Mistral-7B/mistral-7b-instruct-v0.2.Q4_K_M.gguf",

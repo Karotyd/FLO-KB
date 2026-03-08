@@ -193,10 +193,9 @@ New-Item -ItemType SymbolicLink `
 
 | ID | Modèle | VRAM | Usage KB |
 |----|--------|------|----------|
-| `kb-extractor` | Qwen2.5-Coder-32B-Instruct Q4_K_M | ~19 Go | Extraction, résumé |
-| `kb-light` | Mistral 7B Q4_K_M (déjà présent) | ~5 Go | Classification, tagging, fallback |
+| `kb-light` | Mistral 7B Instruct Q4_K_M (déjà présent) | ~5 Go | Toutes tâches KB (filtrage, extraction, résumé, classification) |
 
-Qwen2.5-Coder-32B à placer dans `models/qwen2.5-coder-32b-instruct-q4_k_m/qwen2.5-coder-32b-instruct-q4_k_m.gguf`.
+> Si les résultats d'extraction sont insuffisants en Phase 3, on ajoutera un modèle 14B Instruct.
 Config à ajouter dans `models.json` (voir spec KB).
 
 ---
