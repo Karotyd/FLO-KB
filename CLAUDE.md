@@ -193,10 +193,10 @@ New-Item -ItemType SymbolicLink `
 
 | ID | Modèle | VRAM | Usage KB |
 |----|--------|------|----------|
-| `kb-extractor` | Qwen2.5-14B-Instruct Q5_K_M | ~12 Go | Extraction, résumé |
+| `kb-extractor` | Qwen2.5-Coder-32B-Instruct Q4_K_M | ~19 Go | Extraction, résumé |
 | `kb-light` | Mistral 7B Q4_K_M (déjà présent) | ~5 Go | Classification, tagging, fallback |
 
-Qwen2.5-14B à télécharger depuis HuggingFace et à placer dans `models/Qwen2.5-14B/`.
+Qwen2.5-Coder-32B à placer dans `models/qwen2.5-coder-32b-instruct-q4_k_m/qwen2.5-coder-32b-instruct-q4_k_m.gguf`.
 Config à ajouter dans `models.json` (voir spec KB).
 
 ---
