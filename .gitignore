@@ -1,0 +1,12 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.cache/
+.env
+logs/
+data/sessions/
+data/knowledge/
+data/obsidian_vault/
+models/*.gguf
+models/**/*.gguf

@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic
+llama-cpp-python==0.3.16
+psutil
+python-multipart
+aiosqlite
+numpy
+jinja2
+diskcache

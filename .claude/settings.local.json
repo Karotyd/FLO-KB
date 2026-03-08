@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"$PYTHON\":*)",
+      "Bash(\"/c/Users/jouin/Projets/FLO-KB/venv/Scripts/pip.exe\" install:*)",
+      "Bash(\"/c/Users/jouin/FLO GLOBAL/Versions Flollmanager/FLO_v0.5_STABLE/venv/Scripts/pip.exe\" show:*)",
+      "Bash(\"/c/Users/jouin/FLO GLOBAL/Versions Flollmanager/FLO_v0.5_STABLE/venv/Scripts/pip.exe\" list:*)",
+      "Bash(cp:*)",
+      "Bash(\"/c/Users/jouin/Projets/FLO-KB/venv/Scripts/python.exe\":*)",
+      "Bash(/c/Users/jouin/Projets/FLO-KB/.gitignore:*)"
+    ]
+  }
+}
