@@ -392,6 +392,141 @@ class KnowledgeDB:
         logger.debug("Compteurs de thèmes mis à jour")
 
     # -------------------------------------------------------------------------
+    # Requêtes enrichies pour l'export
+    # -------------------------------------------------------------------------
+
+    async def get_all_items_with_details(self) -> list[dict]:
+        """
+        Retourne tous les items avec leurs thèmes, tags et infos de conversation.
+
+        Chaque dict contient :
+        id, item_type, title, content, summary, source_quote, confidence, created_at,
+        conv_title, conv_source_type, conv_created_at, themes (list), tags (list).
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+
+            # Items + infos conversation
+            cursor = await db.execute("""
+                SELECT ki.id, ki.item_type, ki.title, ki.content, ki.summary,
+                       ki.source_quote, ki.confidence, ki.created_at,
+                       c.title as conv_title, c.source_type as conv_source_type,
+                       c.created_at as conv_created_at, c.value_score
+                FROM knowledge_items ki
+                JOIN conversations c ON ki.conversation_id = c.id
+                ORDER BY ki.id
+            """)
+            rows = await cursor.fetchall()
+            items = [dict(r) for r in rows]
+
+            # Thèmes par item
+            theme_cursor = await db.execute("""
+                SELECT it.item_id, t.name
+                FROM item_themes it
+                JOIN themes t ON it.theme_id = t.id
+                ORDER BY it.item_id, t.name
+            """)
+            theme_rows = await theme_cursor.fetchall()
+
+            # Tags par item
+            tag_cursor = await db.execute("""
+                SELECT it.item_id, tg.name
+                FROM item_tags it
+                JOIN tags tg ON it.tag_id = tg.id
+                ORDER BY it.item_id, tg.name
+            """)
+            tag_rows = await tag_cursor.fetchall()
+
+        # Indexer thèmes et tags par item_id
+        themes_by_item: dict[int, list[str]] = {}
+        for row in theme_rows:
+            themes_by_item.setdefault(row[0], []).append(row[1])
+
+        tags_by_item: dict[int, list[str]] = {}
+        for row in tag_rows:
+            tags_by_item.setdefault(row[0], []).append(row[1])
+
+        for item in items:
+            item["themes"] = themes_by_item.get(item["id"], [])
+            item["tags"] = tags_by_item.get(item["id"], [])
+
+        return items
+
+    async def get_items_by_theme(self, theme_name: str) -> list[dict]:
+        """Retourne les items liés à un thème donné (avec id, title, item_type)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("""
+                SELECT ki.id, ki.title, ki.item_type, ki.confidence
+                FROM knowledge_items ki
+                JOIN item_themes it ON ki.id = it.item_id
+                JOIN themes t ON it.theme_id = t.id
+                WHERE t.name = ?
+                ORDER BY ki.title
+            """, (theme_name,))
+            rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+
+    async def get_themes_with_counts(self) -> list[dict]:
+        """Retourne les thèmes avec leur nombre réel d'items (count live)."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("""
+                SELECT t.id, t.name,
+                       COUNT(it.item_id) as item_count
+                FROM themes t
+                LEFT JOIN item_themes it ON t.id = it.theme_id
+                GROUP BY t.id, t.name
+                ORDER BY item_count DESC, t.name
+            """)
+            rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+
+    async def get_processed_conversations(self) -> list[dict]:
+        """Retourne les conversations traitées (status='processed') avec résumé."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute("""
+                SELECT c.id, c.title, c.source_type, c.created_at,
+                       c.value_score,
+                       ki.summary
+                FROM conversations c
+                LEFT JOIN (
+                    SELECT conversation_id, summary
+                    FROM knowledge_items
+                    WHERE summary IS NOT NULL AND summary != ''
+                    GROUP BY conversation_id
+                ) ki ON c.id = ki.conversation_id
+                WHERE c.status = 'processed'
+                ORDER BY c.id
+            """)
+            rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+
+    async def get_items_for_conversation(self, conv_id: int) -> list[dict]:
+        """Retourne les items d'une conversation donnée."""
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(
+                "SELECT id, title, item_type FROM knowledge_items WHERE conversation_id = ? ORDER BY id",
+                (conv_id,)
+            )
+            rows = await cursor.fetchall()
+        return [dict(r) for r in rows]
+
+    async def get_source_stats(self) -> dict:
+        """Retourne le nombre de conversations par source_type."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("""
+                SELECT source_type, COUNT(*) as count
+                FROM conversations
+                WHERE status = 'processed'
+                GROUP BY source_type
+            """)
+            rows = await cursor.fetchall()
+        return {row[0]: row[1] for row in rows}
+
+    # -------------------------------------------------------------------------
     # Statistiques
     # -------------------------------------------------------------------------
 
