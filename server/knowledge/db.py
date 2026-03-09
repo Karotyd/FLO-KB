@@ -13,6 +13,18 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+# Thèmes initiaux insérés au premier démarrage
+_DEFAULT_THEMES = [
+    "Psychologie",
+    "Tech & IA",
+    "Cinéma",
+    "Jeux Vidéo",
+    "Musique",
+    "Développement Personnel",
+    "Sciences",
+    "Programmation",
+]
+
 # Schéma SQL complet
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS imports (
@@ -92,10 +104,15 @@ class KnowledgeDB:
         self.db_path = db_path
 
     async def initialize(self):
-        """Crée le dossier, la base et les tables si nécessaire."""
+        """Crée le dossier, la base, les tables et les thèmes initiaux si nécessaire."""
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         async with aiosqlite.connect(self.db_path) as db:
             await db.executescript(_SCHEMA)
+            # Thèmes initiaux (INSERT OR IGNORE = idempotent)
+            for theme in _DEFAULT_THEMES:
+                await db.execute(
+                    "INSERT OR IGNORE INTO themes (name) VALUES (?)", (theme,)
+                )
             await db.commit()
         logger.info(f"Base de données initialisée : {self.db_path}")
 
@@ -239,6 +256,140 @@ class KnowledgeDB:
             )
             rows = await cursor.fetchall()
         return [dict(r) for r in rows]
+
+    # -------------------------------------------------------------------------
+    # Statistiques
+    # -------------------------------------------------------------------------
+
+    async def update_conversation_score(self, conv_id: int, score: float):
+        """Met à jour le score de valeur d'une conversation."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "UPDATE conversations SET value_score = ? WHERE id = ?",
+                (score, conv_id)
+            )
+            await db.commit()
+        logger.debug(f"Conversation {conv_id} → score={score}")
+
+    # -------------------------------------------------------------------------
+    # Knowledge Items
+    # -------------------------------------------------------------------------
+
+    async def insert_knowledge_item(
+        self,
+        conversation_id: int,
+        item_type: str,
+        title: str,
+        content: str,
+        summary: Optional[str],
+        source_quote: Optional[str],
+        confidence: float,
+    ) -> int:
+        """
+        Insère un item de connaissance extrait par le LLM.
+
+        Returns:
+            L'ID de l'item créé.
+        """
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """INSERT INTO knowledge_items
+                   (conversation_id, item_type, title, content, summary, source_quote, confidence)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (conversation_id, item_type, title, content, summary, source_quote, confidence)
+            )
+            await db.commit()
+            item_id = cursor.lastrowid
+        logger.debug(f"Item inséré (id={item_id}) : [{item_type}] {title[:50]}")
+        return item_id
+
+    # -------------------------------------------------------------------------
+    # Thèmes et Tags
+    # -------------------------------------------------------------------------
+
+    async def get_all_themes(self) -> list[str]:
+        """Retourne la liste des noms de tous les thèmes."""
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute("SELECT name FROM themes ORDER BY name")
+            rows = await cursor.fetchall()
+        return [r[0] for r in rows]
+
+    async def get_or_create_theme(self, name: str) -> int:
+        """
+        Retourne l'ID du thème. Le crée s'il n'existe pas.
+
+        Returns:
+            L'ID du thème (existant ou créé).
+        """
+        name = name.strip()
+        async with aiosqlite.connect(self.db_path) as db:
+            # Chercher d'abord
+            cursor = await db.execute(
+                "SELECT id FROM themes WHERE name = ?", (name,)
+            )
+            row = await cursor.fetchone()
+            if row:
+                return row[0]
+            # Créer
+            cursor = await db.execute(
+                "INSERT INTO themes (name) VALUES (?)", (name,)
+            )
+            await db.commit()
+            theme_id = cursor.lastrowid
+        logger.info(f"Nouveau thème créé : '{name}' (id={theme_id})")
+        return theme_id
+
+    async def get_or_create_tag(self, name: str) -> int:
+        """
+        Retourne l'ID du tag. Le crée s'il n'existe pas.
+
+        Returns:
+            L'ID du tag (existant ou créé).
+        """
+        name = name.strip().lower()
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "SELECT id FROM tags WHERE name = ?", (name,)
+            )
+            row = await cursor.fetchone()
+            if row:
+                return row[0]
+            cursor = await db.execute(
+                "INSERT INTO tags (name) VALUES (?)", (name,)
+            )
+            await db.commit()
+            tag_id = cursor.lastrowid
+        logger.debug(f"Nouveau tag créé : '{name}' (id={tag_id})")
+        return tag_id
+
+    async def link_item_theme(self, item_id: int, theme_id: int):
+        """Lie un item à un thème. Ignore si la liaison existe déjà."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT OR IGNORE INTO item_themes (item_id, theme_id) VALUES (?, ?)",
+                (item_id, theme_id)
+            )
+            await db.commit()
+
+    async def link_item_tag(self, item_id: int, tag_id: int):
+        """Lie un item à un tag. Ignore si la liaison existe déjà."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                "INSERT OR IGNORE INTO item_tags (item_id, tag_id) VALUES (?, ?)",
+                (item_id, tag_id)
+            )
+            await db.commit()
+
+    async def update_theme_counts(self):
+        """Met à jour les compteurs item_count de tous les thèmes."""
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                UPDATE themes SET item_count = (
+                    SELECT COUNT(*) FROM item_themes WHERE theme_id = themes.id
+                )
+            """)
+            await db.commit()
+        logger.debug("Compteurs de thèmes mis à jour")
 
     # -------------------------------------------------------------------------
     # Statistiques
